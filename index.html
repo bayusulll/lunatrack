@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LunaTrack — Pelacak Siklus Menstruasi</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --maroon-deep:   #5C1515;
+    --maroon:        #7A2020;
+    --maroon-mid:    #9B3030;
+    --maroon-light:  #C4433A;
+    --rose:          #D97070;
+    --rose-pale:     #EDB8B8;
+    --ivory-dark:    #EDE5D8;
+    --ivory:         #F5F0E8;
+    --ivory-light:   #FDF9F4;
+    --text-dark:     #2C1010;
+    --text-mid:      #5A3535;
+    --text-muted:    #9B7070;
+    --white:         #FFFFFF;
+    --shadow-sm:     0 2px 8px rgba(92,21,21,.08);
+    --shadow-md:     0 6px 24px rgba(92,21,21,.12);
+    --shadow-lg:     0 16px 48px rgba(92,21,21,.16);
+    --radius:        16px;
+    --radius-sm:     10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ivory);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ─────────────────────────────────────── */
+  .sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: linear-gradient(175deg, var(--maroon-deep) 0%, var(--maroon) 60%, var(--maroon-mid) 100%);
+    display: flex;
+    flex-direction: column;
+    padding: 32px 0;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar-logo {
+    padding: 0 28px 36px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+  }
+
+  .logo-mark {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    font-size: 22px;
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ivory-light);
+    letter-spacing: .5px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,.5);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgba(255,255,255,.65);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all .2s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-item.active {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  }
+
+  .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .nav-section-label {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.3);
+    padding: 16px 14px 6px;
+    font-weight: 600;
+  }
+
+  .sidebar-footer {
+    padding: 20px 28px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose-pale), var(--rose));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--maroon-deep);
+  }
+
+  .user-info { flex: 1; }
+  .user-name { font-size: 13px; font-weight: 600; color: #fff; }
+  .user-role { font-size: 11px; color: rgba(255,255,255,.45); }
+
+  /* ── MAIN CONTENT ─────────────────────────────────── */
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    padding: 36px 40px;
+    min-height: 100vh;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── PAGE HEADER ─────────────────────────────────── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--maroon-deep);
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    font-weight: 400;
+  }
+
+  .header-actions { display: flex; gap: 12px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary {
+    background: var(--maroon);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(122,32,32,.35);
+  }
+
+  .btn-primary:hover {
+    background: var(--maroon-deep);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(122,32,32,.4);
+  }
+
+  .btn-ghost {
+    background: var(--ivory-dark);
+    color: var(--text-mid);
+  }
+
+  .btn-ghost:hover { background: var(--rose-pale); }
+
+  /* ── STAT CARDS ──────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(180,120,120,.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--maroon), var(--rose));
+  }
+
+  .stat-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .stat-icon.menstrual { background: rgba(196,67,58,.1); }
+  .stat-icon.fertile   { background: rgba(92,21,21,.08); }
+  .stat-icon.ovulation { background: rgba(217,112,112,.15); }
+  .stat-icon.cycle     { background: rgba(155,48,48,.1); }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--maroon-deep);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: .3px;
+  }
+
+  .stat-note {
+    font-size: 11.5px;
+    color: var(--maroon-light);
+    margin-top: 10px;
+    font-weight: 500;
+  }
+
+  /* ── DASHBOARD GRID ──────────────────────────────── */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(180,120,120,.1);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 22px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--maroon-deep);
+  }
+
+  .card-body { padding: 20px 24px 24px; }
+
+  /* ── RADIAL CYCLE CHART ──────────────────────────── */
+  .cycle-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 24px 28px;
+  }
+
+  .radial-wrap {
+    position: relative;
+    width: 240px; height: 240px;
+  }
+
+  #cycleCanvas {
+    width: 240px; height: 240px;
+  }
+
+  .radial-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .radial-day {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--maroon-deep);
+    line-height: 1;
+  }
+
+  .radial-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .cycle-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    margin-top: 22px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-mid);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── CALENDAR ────────────────────────────────────── */
+  .calendar-wrap { padding: 0 24px 24px; }
+
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cal-month {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--maroon-deep);
+  }
+
+  .cal-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--ivory-dark);
+    background: var(--ivory-light);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--text-mid);
+    transition: all .2s;
+  }
+
+  .cal-btn:hover { background: var(--rose-pale); border-color: var(--rose-pale); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+
+  .cal-day-name {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: .5px;
+    padding: 4px 0 8px;
+    text-transform: uppercase;
+  }
+
+  .cal-day {
+    text-align: center;
+    font-size: 13px;
+    padding: 7px 3px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-dark);
+    font-weight: 400;
+    transition: background .15s;
+    line-height: 1;
+    position: relative;
+  }
+
+  .cal-day:hover { background: var(--ivory-dark); }
+  .cal-day.other { color: var(--text-muted); opacity: .4; }
+  .cal-day.today {
+    background: var(--ivory-dark);
+    font-weight: 700;
+    color: var(--maroon-deep);
+  }
+
+  .cal-day.menstrual { background: rgba(196,67,58,.15); color: var(--maroon); font-weight: 600; }
+  .cal-day.fertile   { background: rgba(122,32,32,.1); color: var(--maroon-mid); }
+  .cal-day.ovulation { background: var(--maroon); color: #fff; font-weight: 700; border-radius: 50%; }
+  .cal-day.predicted { background: rgba(196,67,58,.07); border: 1px dashed var(--rose); }
+
+  .cal-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--maroon-light);
+    margin: 2px auto 0;
+  }
+
+  /* ── TIMELINE / SIDEBAR CARDS ──────────────────────── */
+  .phase-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 24px 24px;
+  }
+
+  .phase-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--ivory-light);
+    border: 1px solid var(--ivory-dark);
+    transition: border-color .2s;
+  }
+
+  .phase-row:hover { border-color: var(--rose-pale); }
+
+  .phase-row.current {
+    background: rgba(196,67,58,.06);
+    border-color: rgba(196,67,58,.25);
+  }
+
+  .phase-badge {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .phase-info { flex: 1; }
+  .phase-name { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+  .phase-days { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .phase-bar-wrap {
+    width: 60px;
+    height: 5px;
+    background: var(--ivory-dark);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .phase-bar { height: 100%; border-radius: 3px; }
+
+  /* ── SYMPTOM TRACKER ─────────────────────────────── */
+  .symptom-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .symptom-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+
+  .symptom-card:hover { border-color: var(--rose-pale); transform: translateY(-2px); }
+  .symptom-card.selected { border-color: var(--maroon); background: rgba(122,32,32,.04); }
+
+  .symptom-emoji { font-size: 30px; margin-bottom: 8px; }
+  .symptom-name { font-size: 12.5px; font-weight: 600; color: var(--text-dark); }
+  .symptom-intensity {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 8px;
+  }
+
+  .intensity-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ivory-dark);
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+  .intensity-dot.filled { background: var(--maroon); }
+
+  /* ── MOOD ────────────────────────────────────────── */
+  .mood-section {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(180,120,120,.1);
+    margin-bottom: 22px;
+  }
+
+  .mood-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .mood-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 2px solid var(--ivory-dark);
+    cursor: pointer;
+    transition: all .2s;
+    min-width: 72px;
+    background: var(--ivory-light);
+  }
+
+  .mood-chip:hover { border-color: var(--rose-pale); transform: translateY(-2px); }
+  .mood-chip.active { border-color: var(--maroon); background: rgba(122,32,32,.06); }
+  .mood-chip span:first-child { font-size: 26px; }
+  .mood-chip span:last-child { font-size: 11px; font-weight: 500; color: var(--text-mid); }
+
+  /* ── LOG FORM ─────────────────────────────────────── */
+  .log-form {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(180,120,120,.1);
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-mid);
+    letter-spacing: .3px;
+  }
+
+  .form-control {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--ivory-dark);
+    background: var(--ivory-light);
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-control:focus { border-color: var(--maroon-light); }
+
+  /* ── HISTORY TABLE ───────────────────────────────── */
+  .history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+  }
+
+  .history-table th {
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 10px 16px;
+    text-align: left;
+  }
+
+  .history-table td {
+    padding: 13px 16px;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    background: var(--white);
+    border: 1px solid rgba(180,120,120,.08);
+  }
+
+  .history-table td:first-child { border-radius: 10px 0 0 10px; }
+  .history-table td:last-child { border-radius: 0 10px 10px 0; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .badge-red  { background: rgba(196,67,58,.12); color: var(--maroon); }
+  .badge-pink { background: rgba(217,112,112,.15); color: #9b3030; }
+  .badge-gold { background: rgba(180,130,50,.12); color: #7a5010; }
+
+  /* ── INSIGHT CARD ────────────────────────────────── */
+  .insight-banner {
+    background: linear-gradient(135deg, var(--maroon-deep), var(--maroon-mid));
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    color: #fff;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .insight-banner::after {
+    content: '🌙';
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 52px;
+    opacity: .15;
+  }
+
+  .insight-tag {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: rgba(255,255,255,.85);
+  }
+
+  .insight-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .insight-text { font-size: 13.5px; opacity: .8; line-height: 1.6; }
+
+  /* ── NOTIFICATIONS ───────────────────────────────── */
+  .notif-list { display: flex; flex-direction: column; gap: 10px; padding: 0 24px 24px; }
+
+  .notif-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--ivory-light);
+    border-left: 3px solid var(--maroon);
+    align-items: flex-start;
+  }
+
+  .notif-item.warn  { border-left-color: #D4A017; }
+  .notif-item.info  { border-left-color: var(--rose); }
+  .notif-icon { font-size: 18px; flex-shrink: 0; }
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+  .notif-sub   { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── PREDICTION BARS ─────────────────────────────── */
+  .prediction-section { padding: 0 24px 24px; }
+
+  .pred-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .pred-label { font-size: 12.5px; color: var(--text-mid); width: 110px; font-weight: 500; }
+
+  .pred-track {
+    flex: 1;
+    height: 8px;
+    background: var(--ivory-dark);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .pred-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--maroon-light), var(--maroon));
+  }
+
+  .pred-val { font-size: 12px; color: var(--text-muted); width: 38px; text-align: right; }
+
+  /* ── NOTES ───────────────────────────────────────── */
+  .notes-area {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--ivory-dark);
+    background: var(--ivory-light);
+    padding: 14px;
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: 'Inter', sans-serif;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .notes-area:focus { border-color: var(--maroon-light); }
+
+  /* ── TOAST ───────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--maroon-deep);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── MODAL ───────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(44,16,16,.5);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px;
+    width: 440px;
+    max-width: 94vw;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp .25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--maroon-deep);
+    margin-bottom: 6px;
+  }
+
+  .modal-sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 24px; }
+
+  .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+  /* ── SECTION DIVIDER ─────────────────────────────── */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ivory-dark);
+  }
+
+  /* ── UTILITIES ───────────────────────────────────── */
+  .mt-6  { margin-top: 6px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-20 { margin-top: 20px; }
+  .gap-3 { gap: 12px; }
+  .flex  { display: flex; align-items: center; }
+  .full  { width: 100%; }
+
+  select.form-control { appearance: none; cursor: pointer; }
+
+  /* ── SCROLLBAR ───────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--ivory); }
+  ::-webkit-scrollbar-thumb { background: var(--rose-pale); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🌸</div>
+    <div class="logo-text">LunaTrack</div>
+    <div class="logo-sub">Pelacak Siklus</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Utama</div>
+    <a class="nav-item active" onclick="showPage('dashboard', this)">
+      <span class="nav-icon">🏠</span> Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('kalender', this)">
+      <span class="nav-icon">📅</span> Kalender Siklus
+    </a>
+    <a class="nav-item" onclick="showPage('catat', this)">
+      <span class="nav-icon">✏️</span> Catat Harian
+    </a>
+
+    <div class="nav-section-label" style="margin-top:8px;">Analisis</div>
+    <a class="nav-item" onclick="showPage('prediksi', this)">
+      <span class="nav-icon">🔮</span> Prediksi & Insight
+    </a>
+    <a class="nav-item" onclick="showPage('gejala', this)">
+      <span class="nav-icon">💊</span> Gejala & Suasana
+    </a>
+    <a class="nav-item" onclick="showPage('riwayat', this)">
+      <span class="nav-icon">📋</span> Riwayat Siklus
+    </a>
+
+    <div class="nav-section-label" style="margin-top:8px;">Lainnya</div>
+    <a class="nav-item" onclick="showPage('pengaturan', this)">
+      <span class="nav-icon">⚙️</span> Pengaturan
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name">Sari Andini</div>
+        <div class="user-role">Siklus ke-3 tercatat</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Selamat Pagi, Sari 🌸</div>
+        <div class="page-subtitle">Sabtu, 14 Juni 2025 — Hari ke-8 siklus Anda</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="showPage('catat', document.querySelector('.nav-item:nth-child(4)'))">+ Catatan Hari Ini</button>
+        <button class="btn btn-primary" onclick="openModal()">🩸 Mulai Menstruasi</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon menstrual">🩸</div>
+        <div class="stat-value">8</div>
+        <div class="stat-label">Hari dalam Siklus</div>
+        <div class="stat-note">Fase Folikuler</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon fertile">🌿</div>
+        <div class="stat-value">6</div>
+        <div class="stat-label">Hari Menuju Ovulasi</div>
+        <div class="stat-note">Masa subur mulai 5 hari</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon ovulation">🌟</div>
+        <div class="stat-value">14</div>
+        <div class="stat-label">Prediksi Ovulasi</div>
+        <div class="stat-note">Juni 2025</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon cycle">🔄</div>
+        <div class="stat-value">28</div>
+        <div class="stat-label">Rata-rata Siklus</div>
+        <div class="stat-note">Haid berikut: 6 Jul</div>
+      </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Left: Radial + Calendar -->
+      <div style="display:flex;flex-direction:column;gap:22px;">
+
+        <!-- Cycle Visual Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Posisi Siklus Anda</div>
+            <span style="font-size:12px;color:var(--text-muted);">Siklus 28 hari</span>
+          </div>
+          <div class="cycle-visual">
+            <div class="radial-wrap">
+              <canvas id="cycleCanvas" width="240" height="240"></canvas>
+              <div class="radial-center">
+                <div class="radial-day">8</div>
+                <div class="radial-label">HARI INI</div>
+              </div>
+            </div>
+            <div class="cycle-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#C4433A;"></div>Menstruasi (H1–5)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#D97070;"></div>Folikuler (H6–13)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#7A2020;"></div>Ovulasi (H14)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#9B3030;"></div>Luteal (H15–28)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Calendar -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Kalender Juni 2025</div>
+            <div style="display:flex;gap:8px;">
+              <button class="cal-btn">‹</button>
+              <button class="cal-btn">›</button>
+            </div>
+          </div>
+          <div class="calendar-wrap" id="miniCal"></div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div style="display:flex;flex-direction:column;gap:22px;">
+
+        <!-- Phase Timeline -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Fase Siklus</div>
+          </div>
+          <div class="phase-timeline" style="margin-top:16px;">
+            <div class="phase-row">
+              <div class="phase-badge" style="background:rgba(196,67,58,.12)">🩸</div>
+              <div class="phase-info">
+                <div class="phase-name">Menstruasi</div>
+                <div class="phase-days">1–5 Juni (selesai)</div>
+              </div>
+              <div class="phase-bar-wrap"><div class="phase-bar" style="width:100%;background:#C4433A;"></div></div>
+            </div>
+            <div class="phase-row current">
+              <div class="phase-badge" style="background:rgba(217,112,112,.15)">🌿</div>
+              <div class="phase-info">
+                <div class="phase-name">Folikuler ✦</div>
+                <div class="phase-days">6–13 Juni (berlangsung)</div>
+              </div>
+              <div class="phase-bar-wrap"><div class="phase-bar" style="width:37%;background:#D97070;"></div></div>
+            </div>
+            <div class="phase-row">
+              <div class="phase-badge" style="background:rgba(92,21,21,.08)">🌟</div>
+              <div class="phase-info">
+                <div class="phase-name">Ovulasi</div>
+                <div class="phase-days">14 Juni (6 hari lagi)</div>
+              </div>
+              <div class="phase-bar-wrap"><div class="phase-bar" style="width:10%;background:#7A2020;"></div></div>
+            </div>
+            <div class="phase-row">
+              <div class="phase-badge" style="background:rgba(155,48,48,.08)">🌙</div>
+              <div class="phase-info">
+                <div class="phase-name">Luteal</div>
+                <div class="phase-days">15–28 Juni (akan datang)</div>
+              </div>
+              <div class="phase-bar-wrap"><div class="phase-bar" style="width:0%;background:#9B3030;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Pengingat</div>
+          </div>
+          <div class="notif-list" style="margin-top:16px;">
+            <div class="notif-item">
+              <div class="notif-icon">🌸</div>
+              <div class="notif-body">
+                <div class="notif-title">Masa Subur Segera</div>
+                <div class="notif-sub">Mulai 5 hari lagi (19–23 Jun)</div>
+              </div>
+            </div>
+            <div class="notif-item warn">
+              <div class="notif-icon">💊</div>
+              <div class="notif-body">
+                <div class="notif-title">Catat Gejala Hari Ini</div>
+                <div class="notif-sub">Belum ada catatan untuk hari ini</div>
+              </div>
+            </div>
+            <div class="notif-item info">
+              <div class="notif-icon">📊</div>
+              <div class="notif-body">
+                <div class="notif-title">Siklus Teratur</div>
+                <div class="notif-sub">3 siklus terakhir ±1 hari konsisten</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KALENDER ── -->
+  <div class="page" id="page-kalender">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Kalender Siklus</div>
+        <div class="page-subtitle">Lihat pola menstruasi, masa subur, dan ovulasi Anda</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost">⬅ Bulan Lalu</button>
+        <button class="btn btn-ghost">Bulan Ini</button>
+        <button class="btn btn-primary">Bulan Berikut ➡</button>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Juni 2025 — Kalender Lengkap</div>
+        </div>
+        <div style="padding:20px 28px 28px;" id="fullCal"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:16px;">Keterangan Warna</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="legend-item"><div class="legend-dot" style="width:14px;height:14px;background:#C4433A;"></div> <span style="font-size:13px;">Menstruasi</span></div>
+            <div class="legend-item"><div class="legend-dot" style="width:14px;height:14px;background:#D97070;"></div> <span style="font-size:13px;">Masa Subur</span></div>
+            <div class="legend-item"><div class="legend-dot" style="width:14px;height:14px;background:#7A2020;"></div> <span style="font-size:13px;">Ovulasi (prediksi)</span></div>
+            <div class="legend-item"><div class="legend-dot" style="width:14px;height:14px;background:rgba(196,67,58,.2);border:1.5px dashed #C4433A;"></div> <span style="font-size:13px;">Perkiraan Haid Berikut</span></div>
+            <div class="legend-item"><div class="legend-dot" style="width:14px;height:14px;background:var(--ivory-dark);border:2px solid var(--maroon);"></div> <span style="font-size:13px;">Hari Ini</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:14px;">Prediksi Bulan Ini</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;">
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(196,67,58,.07);border-radius:8px;">
+              <span style="color:var(--text-mid);">🩸 Menstruasi</span>
+              <span style="font-weight:600;color:var(--maroon);">1–5 Jun</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(217,112,112,.1);border-radius:8px;">
+              <span style="color:var(--text-mid);">🌿 Masa Subur</span>
+              <span style="font-weight:600;color:var(--maroon-mid);">11–17 Jun</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(92,21,21,.07);border-radius:8px;">
+              <span style="color:var(--text-mid);">🌟 Ovulasi</span>
+              <span style="font-weight:600;color:var(--maroon-deep);">14 Jun</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(196,67,58,.05);border-radius:8px;">
+              <span style="color:var(--text-mid);">🔮 Haid Berikut</span>
+              <span style="font-weight:600;color:var(--maroon);">6–10 Jul</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:14px;">Keakuratan Prediksi</div>
+          <div class="prediction-section" style="padding:0;">
+            <div class="pred-row"><div class="pred-label">Haid berikut</div><div class="pred-track"><div class="pred-fill" style="width:87%;"></div></div><div class="pred-val">87%</div></div>
+            <div class="pred-row"><div class="pred-label">Ovulasi</div><div class="pred-track"><div class="pred-fill" style="width:74%;"></div></div><div class="pred-val">74%</div></div>
+            <div class="pred-row"><div class="pred-label">Masa subur</div><div class="pred-track"><div class="pred-fill" style="width:80%;"></div></div><div class="pred-val">80%</div></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">Akurasi meningkat seiring lebih banyak data tercatat.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CATAT HARIAN ── -->
+  <div class="page" id="page-catat">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Catatan Hari Ini</div>
+        <div class="page-subtitle">Sabtu, 14 Juni 2025 — Hari ke-8 siklus</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <!-- Mood -->
+        <div class="mood-section">
+          <div class="card-title">Bagaimana suasana hati Anda hari ini?</div>
+          <div class="mood-row">
+            <div class="mood-chip active" onclick="toggleMood(this)"><span>😊</span><span>Bahagia</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😌</span><span>Tenang</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😢</span><span>Sedih</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😠</span><span>Kesal</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😰</span><span>Cemas</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😴</span><span>Lelah</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>🥰</span><span>Romantis</span></div>
+            <div class="mood-chip" onclick="toggleMood(this)"><span>😤</span><span>Frustrasi</span></div>
+          </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:18px;">Gejala Fisik</div>
+          <div class="symptom-grid">
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">🤕</div>
+              <div class="symptom-name">Kram Perut</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot filled" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">🤯</div>
+              <div class="symptom-name">Sakit Kepala</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card selected" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">💧</div>
+              <div class="symptom-name">Kembung</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot filled" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot filled" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">🤢</div>
+              <div class="symptom-name">Mual</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">😓</div>
+              <div class="symptom-name">Nyeri Punggung</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">🫁</div>
+              <div class="symptom-name">Sesak Napas</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">😴</div>
+              <div class="symptom-name">Kelelahan</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+            <div class="symptom-card" onclick="toggleSymptom(this)">
+              <div class="symptom-emoji">🌡️</div>
+              <div class="symptom-name">Demam Ringan</div>
+              <div class="symptom-intensity">
+                <div class="intensity-dot" onclick="setIntensity(event,this,1)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,2)"></div>
+                <div class="intensity-dot" onclick="setIntensity(event,this,3)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="log-form">
+          <div class="section-label">Catatan Tambahan</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Aliran Menstruasi</label>
+              <select class="form-control">
+                <option>— Tidak ada —</option>
+                <option>Ringan</option>
+                <option>Sedang</option>
+                <option>Berat</option>
+                <option>Sangat Berat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Suhu Tubuh Basal (°C)</label>
+              <input type="number" class="form-control" placeholder="misal: 36.5" step="0.1">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label">Catatan Pribadi</label>
+            <textarea class="notes-area" placeholder="Tuliskan apa yang Anda rasakan hari ini..."></textarea>
+          </div>
+          <button class="btn btn-primary full" onclick="saveLog()">💾 Simpan Catatan Hari Ini</button>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="insight-banner">
+          <div class="insight-tag">💡 Tips Fase Folikuler</div>
+          <div class="insight-title">Energi Anda Meningkat</div>
+          <div class="insight-text">Fase folikuler adalah waktu terbaik untuk olahraga intens, keputusan besar, dan aktivitas sosial. Estrogen yang meningkat mendukung mood dan kognisi.</div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:16px;">Nutrisi yang Dianjurkan</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="phase-row" style="padding:10px 12px;">
+              <span style="font-size:20px;">🥦</span>
+              <div class="phase-info"><div class="phase-name" style="font-size:13px;">Sayuran Hijau</div><div class="phase-days">Mendukung produksi estrogen</div></div>
+            </div>
+            <div class="phase-row" style="padding:10px 12px;">
+              <span style="font-size:20px;">🐟</span>
+              <div class="phase-info"><div class="phase-name" style="font-size:13px;">Omega-3</div><div class="phase-days">Kurangi peradangan</div></div>
+            </div>
+            <div class="phase-row" style="padding:10px 12px;">
+              <span style="font-size:20px;">🍳</span>
+              <div class="phase-info"><div class="phase-name" style="font-size:13px;">Protein Cukup</div><div class="phase-days">Jaga energi & mood</div></div>
+            </div>
+            <div class="phase-row" style="padding:10px 12px;">
+              <span style="font-size:20px;">💧</span>
+              <div class="phase-info"><div class="phase-name" style="font-size:13px;">Hidrasi 2L/hari</div><div class="phase-days">Penting di semua fase</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PREDIKSI ── -->
+  <div class="page" id="page-prediksi">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Prediksi & Insight</div>
+        <div class="page-subtitle">Analisis berbasis 3 siklus yang telah tercatat</div>
+      </div>
+    </div>
+
+    <div class="insight-banner" style="margin-bottom:24px;">
+      <div class="insight-tag">🔮 Prediksi Akurat</div>
+      <div class="insight-title">Siklus Anda Sangat Teratur</div>
+      <div class="insight-text">Berdasarkan data 3 siklus terakhir, siklus Anda berkisar 27–29 hari dengan variasi rendah. Ini tanda kesehatan reproduksi yang baik. Haid berikutnya diprediksi pada 6–8 Juli 2025.</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon cycle">📊</div>
+        <div class="stat-value">28.3</div>
+        <div class="stat-label">Rata-rata Siklus (hari)</div>
+        <div class="stat-note">±0.9 hari variasi</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon menstrual">🩸</div>
+        <div class="stat-value">4.7</div>
+        <div class="stat-label">Durasi Menstruasi (hari)</div>
+        <div class="stat-note">Normal: 3–7 hari</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon fertile">🌿</div>
+        <div class="stat-value">14</div>
+        <div class="stat-label">Hari Ovulasi (prediksi)</div>
+        <div class="stat-note">Juni 2025</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon ovulation">🎯</div>
+        <div class="stat-value">87%</div>
+        <div class="stat-label">Akurasi Prediksi</div>
+        <div class="stat-note">Makin banyak data = akurat</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid" style="margin-top:24px;">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Tren Panjang Siklus (Bulan Lalu)</div></div>
+          <div class="card-body">
+            <canvas id="trendChart" width="500" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">3 Bulan Ke Depan — Prediksi Kalender</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ivory-light);border-radius:10px;border-left:3px solid var(--maroon);">
+                <div><div style="font-size:13.5px;font-weight:600;color:var(--text-dark);">🩸 Menstruasi Berikutnya</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px;">6–10 Juli 2025</div></div>
+                <span style="font-size:11.5px;padding:4px 10px;background:rgba(196,67,58,.1);color:var(--maroon);border-radius:20px;font-weight:600;">22 hari lagi</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ivory-light);border-radius:10px;border-left:3px solid var(--rose);">
+                <div><div style="font-size:13.5px;font-weight:600;color:var(--text-dark);">🌿 Masa Subur Berikutnya</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px;">11–17 Juli 2025</div></div>
+                <span style="font-size:11.5px;padding:4px 10px;background:rgba(217,112,112,.15);color:#9b3030;border-radius:20px;font-weight:600;">27 hari lagi</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ivory-light);border-radius:10px;border-left:3px solid var(--maroon-deep);">
+                <div><div style="font-size:13.5px;font-weight:600;color:var(--text-dark);">🩸 Menstruasi Agustus</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px;">3–7 Agustus 2025</div></div>
+                <span style="font-size:11.5px;padding:4px 10px;background:rgba(92,21,21,.08);color:var(--maroon-deep);border-radius:20px;font-weight:600;">50 hari lagi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:14px;">Kesuburan Hari Ini</div>
+          <div style="text-align:center;padding:16px 0;">
+            <div style="font-size:52px;margin-bottom:8px;">🌱</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--maroon-deep);font-weight:700;">Rendah</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:6px;">Hari ke-8 siklus — sebelum masa subur</div>
+            <div style="margin-top:16px;padding:12px;background:var(--ivory);border-radius:10px;font-size:12.5px;color:var(--text-mid);line-height:1.6;">
+              Masa subur Anda diperkirakan mulai <strong>5 hari lagi</strong> (19 Juni). Ovulasi diprediksi pada <strong>14 Juni</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:16px;">Pola Gejala yang Sering Muncul</div>
+          <div class="prediction-section" style="padding:0;">
+            <div class="pred-row"><div class="pred-label">Kram Perut</div><div class="pred-track"><div class="pred-fill" style="width:90%;"></div></div><div class="pred-val">3/3 siklus</div></div>
+            <div class="pred-row"><div class="pred-label">Kembung</div><div class="pred-track"><div class="pred-fill" style="width:66%;"></div></div><div class="pred-val">2/3 siklus</div></div>
+            <div class="pred-row"><div class="pred-label">Sakit Kepala</div><div class="pred-track"><div class="pred-fill" style="width:33%;"></div></div><div class="pred-val">1/3 siklus</div></div>
+            <div class="pred-row"><div class="pred-label">Kelelahan</div><div class="pred-track"><div class="pred-fill" style="width:66%;"></div></div><div class="pred-val">2/3 siklus</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GEJALA & SUASANA ── -->
+  <div class="page" id="page-gejala">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Gejala & Suasana Hati</div>
+        <div class="page-subtitle">Rekap catatan Anda dalam bulan ini</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:18px;">Distribusi Suasana Hati — Juni 2025</div>
+          <canvas id="moodChart" width="460" height="220"></canvas>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:18px;">Intensitas Gejala per Fase</div>
+          <div class="symptom-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="symptom-card selected">
+              <div class="symptom-emoji">🤕</div>
+              <div class="symptom-name">Kram</div>
+              <div style="font-size:11px;color:var(--maroon);font-weight:600;margin-top:6px;">Berat</div>
+            </div>
+            <div class="symptom-card selected">
+              <div class="symptom-emoji">💧</div>
+              <div class="symptom-name">Kembung</div>
+              <div style="font-size:11px;color:var(--maroon-mid);font-weight:600;margin-top:6px;">Sedang</div>
+            </div>
+            <div class="symptom-card">
+              <div class="symptom-emoji">🤯</div>
+              <div class="symptom-name">Sakit Kepala</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:6px;">Ringan</div>
+            </div>
+            <div class="symptom-card selected">
+              <div class="symptom-emoji">😴</div>
+              <div class="symptom-name">Kelelahan</div>
+              <div style="font-size:11px;color:var(--maroon-mid);font-weight:600;margin-top:6px;">Sedang</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="insight-banner">
+          <div class="insight-tag">📈 Pola Terdeteksi</div>
+          <div class="insight-title">PMS 3 Hari Sebelum Haid</div>
+          <div class="insight-text">Data menunjukkan pola gejala kembung dan kelelahan konsisten muncul 3 hari sebelum menstruasi di 2 dari 3 siklus terakhir.</div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:16px;">Catatan Terakhir</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="notif-item" style="border-left-color:var(--maroon);">
+              <div class="notif-icon">📅</div>
+              <div class="notif-body"><div class="notif-title">13 Juni — Folikuler H7</div><div class="notif-sub">😊 Bahagia · Kembung ringan · BBT: 36.4°C</div></div>
+            </div>
+            <div class="notif-item" style="border-left-color:var(--rose);">
+              <div class="notif-icon">📅</div>
+              <div class="notif-body"><div class="notif-title">12 Juni — Folikuler H6</div><div class="notif-sub">😌 Tenang · Tidak ada gejala</div></div>
+            </div>
+            <div class="notif-item info" style="border-left-color:var(--rose);">
+              <div class="notif-icon">📅</div>
+              <div class="notif-body"><div class="notif-title">11 Juni — Folikuler H5</div><div class="notif-sub">😊 Bahagia · Sedikit lelah</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIWAYAT ── -->
+  <div class="page" id="page-riwayat">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Riwayat Siklus</div>
+        <div class="page-subtitle">Data 3 siklus yang telah tercatat</div>
+      </div>
+      <button class="btn btn-ghost">⬇ Unduh Laporan</button>
+    </div>
+
+    <div class="card" style="padding:28px;">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Siklus</th>
+            <th>Mulai Haid</th>
+            <th>Selesai Haid</th>
+            <th>Durasi Haid</th>
+            <th>Panjang Siklus</th>
+            <th>Gejala Utama</th>
+            <th>Suasana Hati</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>#3 (Saat ini)</strong></td>
+            <td>1 Jun 2025</td>
+            <td>5 Jun 2025</td>
+            <td><span class="badge badge-pink">5 hari</span></td>
+            <td>—</td>
+            <td>Kram, Kembung</td>
+            <td>😊 Bahagia</td>
+            <td><span class="badge badge-red">Berlangsung</span></td>
+          </tr>
+          <tr>
+            <td><strong>#2</strong></td>
+            <td>4 Mei 2025</td>
+            <td>8 Mei 2025</td>
+            <td><span class="badge badge-pink">5 hari</span></td>
+            <td><span class="badge badge-gold">28 hari</span></td>
+            <td>Kram, Sakit kepala</td>
+            <td>😠 Kesal</td>
+            <td><span class="badge badge-gold">Selesai</span></td>
+          </tr>
+          <tr>
+            <td><strong>#1</strong></td>
+            <td>6 Apr 2025</td>
+            <td>10 Apr 2025</td>
+            <td><span class="badge badge-pink">4 hari</span></td>
+            <td><span class="badge badge-gold">28 hari</span></td>
+            <td>Kembung, Kelelahan</td>
+            <td>😢 Sedih</td>
+            <td><span class="badge badge-gold">Selesai</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stats-grid" style="margin-top:22px;">
+      <div class="stat-card"><div class="stat-icon cycle">📅</div><div class="stat-value">3</div><div class="stat-label">Total Siklus Tercatat</div></div>
+      <div class="stat-card"><div class="stat-icon menstrual">🩸</div><div class="stat-value">4.7</div><div class="stat-label">Rata-rata Durasi Haid</div><div class="stat-note">Normal</div></div>
+      <div class="stat-card"><div class="stat-icon fertile">📊</div><div class="stat-value">28</div><div class="stat-label">Rata-rata Panjang Siklus</div><div class="stat-note">Sangat Reguler</div></div>
+      <div class="stat-card"><div class="stat-icon ovulation">⭐</div><div class="stat-value">100%</div><div class="stat-label">Siklus Teratur</div><div class="stat-note">Tidak ada keterlambatan</div></div>
+    </div>
+  </div>
+
+  <!-- ── PENGATURAN ── -->
+  <div class="page" id="page-pengaturan">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Pengaturan Profil</div>
+        <div class="page-subtitle">Sesuaikan preferensi pelacak Anda</div>
+      </div>
+      <button class="btn btn-primary" onclick="showToast('✅ Pengaturan tersimpan!')">Simpan Perubahan</button>
+    </div>
+
+    <div class="dashboard-grid">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div class="log-form">
+          <div class="section-label">Data Pribadi</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Nama Lengkap</label><input type="text" class="form-control" value="Sari Andini"></div>
+            <div class="form-group"><label class="form-label">Tanggal Lahir</label><input type="date" class="form-control" value="1998-03-15"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" value="sari@email.com"></div>
+            <div class="form-group"><label class="form-label">Zona Waktu</label><select class="form-control"><option>WIB (Asia/Jakarta)</option><option>WITA</option><option>WIT</option></select></div>
+          </div>
+
+          <div class="section-label" style="margin-top:8px;">Parameter Siklus</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Rata-rata Panjang Siklus (hari)</label><input type="number" class="form-control" value="28"></div>
+            <div class="form-group"><label class="form-label">Rata-rata Durasi Haid (hari)</label><input type="number" class="form-control" value="5"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Hari Pertama Haid Terakhir</label><input type="date" class="form-control" value="2025-06-01"></div>
+            <div class="form-group"><label class="form-label">Tujuan Pelacakan</label>
+              <select class="form-control">
+                <option>Memantau Kesehatan</option>
+                <option>Merencanakan Kehamilan</option>
+                <option>Mencegah Kehamilan</option>
+                <option>Mengelola Gejala PMS</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="log-form">
+          <div class="section-label">Pengingat & Notifikasi</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="phase-row" style="justify-content:space-between;">
+              <div><div class="phase-name">Pengingat Catat Harian</div><div class="phase-days">Setiap hari pukul 20.00</div></div>
+              <input type="time" class="form-control" style="width:110px;" value="20:00">
+            </div>
+            <div class="phase-row" style="justify-content:space-between;">
+              <div><div class="phase-name">Notifikasi Masa Subur</div><div class="phase-days">5 hari sebelum masa subur</div></div>
+              <select class="form-control" style="width:110px;"><option>5 hari</option><option>3 hari</option><option>1 hari</option></select>
+            </div>
+            <div class="phase-row" style="justify-content:space-between;">
+              <div><div class="phase-name">Pengingat Haid Akan Datang</div><div class="phase-days">Sebelum perkiraan haid</div></div>
+              <select class="form-control" style="width:110px;"><option>3 hari</option><option>5 hari</option><option>7 hari</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:16px;">Ringkasan Profil</div>
+          <div style="text-align:center;padding:12px 0 20px;">
+            <div class="avatar" style="width:64px;height:64px;font-size:24px;margin:0 auto 14px;">SA</div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--maroon-deep);">Sari Andini</div>
+            <div style="font-size:12.5px;color:var(--text-muted);margin-top:4px;">Pengguna sejak April 2025</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ivory-dark);"><span style="color:var(--text-muted);">Siklus tercatat</span><strong>3 siklus</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ivory-dark);"><span style="color:var(--text-muted);">Hari dicatat</span><strong>14 hari</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="color:var(--text-muted);">Rata-rata siklus</span><strong>28.3 hari</strong></div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:24px;">
+          <div class="card-title" style="margin-bottom:14px;color:#B22222;">⚠️ Zona Bahaya</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">Segera konsultasi dengan dokter jika siklus Anda sangat tidak teratur, durasi haid lebih dari 7 hari, atau ada nyeri yang sangat hebat.</div>
+          <button class="btn btn-ghost full" style="color:#B22222;border:1px solid #B22222;background:rgba(178,34,34,.05);">Hapus Semua Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">🩸 Mulai Menstruasi</div>
+    <div class="modal-sub">Catat bahwa menstruasi Anda dimulai hari ini, 14 Juni 2025.</div>
+    <div class="form-group">
+      <label class="form-label">Tanggal Mulai</label>
+      <input type="date" class="form-control" value="2025-06-14">
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label">Intensitas Awal</label>
+      <select class="form-control">
+        <option>Ringan — Bercak / flek</option>
+        <option>Sedang — Normal</option>
+        <option>Berat — Aliran deras</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost full" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary full" onclick="confirmMenstrual()">Simpan & Catat</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Data tersimpan!</div>
+
+<script>
+// ── NAV ──────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'prediksi') setTimeout(drawTrendChart, 100);
+  if (id === 'gejala') setTimeout(drawMoodChart, 100);
+}
+
+// ── RADIAL CYCLE CANVAS ───────────────────────────────
+function drawCycleWheel() {
+  const canvas = document.getElementById('cycleCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 120, cy = 120, R = 100, r = 62;
+  const phases = [
+    { days: 5,  color: '#C4433A', label: 'Menstruasi' },
+    { days: 8,  color: '#D97070', label: 'Folikuler' },
+    { days: 1,  color: '#7A2020', label: 'Ovulasi' },
+    { days: 14, color: '#9B3030', label: 'Luteal' },
+  ];
+  const total = 28;
+  let start = -Math.PI / 2;
+
+  ctx.clearRect(0, 0, 240, 240);
+
+  // Shadow ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, R + 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(92,21,21,.06)';
+  ctx.fill();
+
+  phases.forEach((ph, i) => {
+    const angle = (ph.days / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, start, start + angle);
+    ctx.closePath();
+    ctx.fillStyle = ph.color;
+    ctx.fill();
+    ctx.strokeStyle = '#FDF9F4';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    start += angle;
+  });
+
+  // Current day indicator (day 8)
+  const currentAngle = ((8 - 1) / total) * Math.PI * 2 - Math.PI / 2;
+  const ix = cx + (R - 12) * Math.cos(currentAngle);
+  const iy = cy + (R - 12) * Math.sin(currentAngle);
+  ctx.beginPath();
+  ctx.arc(ix, iy, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(92,21,21,.4)';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Center hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#FDF9F4';
+  ctx.fill();
+}
+
+// ── CALENDAR ─────────────────────────────────────────
+function buildCalendar(containerId, large) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const menstrual  = [1,2,3,4,5];
+  const fertile    = [11,12,13,15,16,17];
+  const ovulation  = [14];
+  const predicted  = [7,8]; // next cycle preview
+
+  let html = '<div class="cal-grid">';
+  days.forEach(d => html += `<div class="cal-day-name">${d}</div>`);
+
+  // June 2025 starts on Sunday (0)
+  for (let i = 0; i < 0; i++) html += `<div class="cal-day other"></div>`;
+  // Actually June 1 2025 = Sunday
+  for (let d = 1; d <= 30; d++) {
+    let cls = 'cal-day';
+    if (d === 14) cls += ' today';
+    else if (menstrual.includes(d)) cls += ' menstrual';
+    else if (ovulation.includes(d)) cls += ' ovulation';
+    else if (fertile.includes(d)) cls += ' fertile';
+    const dot = (d >= 1 && d <= 14) ? '<div class="cal-dot"></div>' : '';
+    html += `<div class="${cls}">${d}${large ? dot : ''}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── TREND CHART ───────────────────────────────────────
+function drawTrendChart() {
+  const c = document.getElementById('trendChart');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const data = [28, 28, 29, 27, 28, 28];
+  const labels = ['Jan','Feb','Mar','Apr','Mei','Jun'];
+  const W = c.width, H = c.height;
+  const pad = { t:20, r:20, b:36, l:40 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const min = 25, max = 32;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(180,120,120,.12)'; ctx.lineWidth = 1;
+  [26,27,28,29,30].forEach(v => {
+    const y = pad.t + gH - ((v - min)/(max - min)) * gH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(90,53,53,.4)'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(v, pad.l - 6, y + 4);
+  });
+
+  // Line gradient
+  const grad = ctx.createLinearGradient(pad.l, 0, pad.l + gW, 0);
+  grad.addColorStop(0, '#C4433A'); grad.addColorStop(1, '#7A2020');
+
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = pad.l + (i / (data.length - 1)) * gW;
+    const y = pad.t + gH - ((v - min)/(max - min)) * gH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = grad; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.stroke();
+
+  // Fill
+  ctx.lineTo(pad.l + gW, pad.t + gH); ctx.lineTo(pad.l, pad.t + gH); ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
+  fillGrad.addColorStop(0, 'rgba(196,67,58,.18)'); fillGrad.addColorStop(1, 'rgba(196,67,58,0)');
+  ctx.fillStyle = fillGrad; ctx.fill();
+
+  // Dots + labels
+  data.forEach((v, i) => {
+    const x = pad.l + (i / (data.length - 1)) * gW;
+    const y = pad.t + gH - ((v - min)/(max - min)) * gH;
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#7A2020'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = '#5A3535'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x, pad.t + gH + 20);
+    ctx.fillStyle = 'rgba(90,53,53,.6)'; ctx.font = 'bold 10px Inter';
+    ctx.fillText(v, x, y - 10);
+  });
+}
+
+// ── MOOD CHART ─────────────────────────────────────────
+function drawMoodChart() {
+  const c = document.getElementById('moodChart');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  const moods = [
+    { label: '😊 Bahagia', val: 8, color: '#C4433A' },
+    { label: '😌 Tenang',  val: 5, color: '#D97070' },
+    { label: '😴 Lelah',   val: 4, color: '#9B3030' },
+    { label: '😢 Sedih',   val: 2, color: '#7A2020' },
+    { label: '😠 Kesal',   val: 1, color: '#5C1515' },
+  ];
+  const max = 10, barH = 28, gap = 14, pad = { t:10, l:110, r:40, b:10 };
+  const gW = W - pad.l - pad.r;
+
+  ctx.clearRect(0, 0, W, H);
+  moods.forEach((m, i) => {
+    const y = pad.t + i * (barH + gap);
+    // Label
+    ctx.fillStyle = '#5A3535'; ctx.font = '13px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(m.label, pad.l - 10, y + barH/2 + 4);
+    // Bg
+    ctx.beginPath();
+    roundRect(ctx, pad.l, y, gW, barH, 6);
+    ctx.fillStyle = 'rgba(196,67,58,.08)'; ctx.fill();
+    // Fill
+    const fw = (m.val / max) * gW;
+    const grad = ctx.createLinearGradient(pad.l, 0, pad.l + fw, 0);
+    grad.addColorStop(0, m.color + 'BB'); grad.addColorStop(1, m.color);
+    ctx.beginPath();
+    roundRect(ctx, pad.l, y, fw, barH, 6);
+    ctx.fillStyle = grad; ctx.fill();
+    // Val
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'center';
+    if (fw > 26) ctx.fillText(m.val, pad.l + fw - 16, y + barH/2 + 4);
+    ctx.fillStyle = '#9B7070'; ctx.font = '11px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('hari', pad.l + fw + 6, y + barH/2 + 4);
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
+// ── INTERACTIONS ──────────────────────────────────────
+function toggleMood(el) {
+  el.closest('.mood-row').querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleSymptom(el) { el.classList.toggle('selected'); }
+
+function setIntensity(e, dot, level) {
+  e.stopPropagation();
+  const dots = dot.closest('.symptom-intensity').querySelectorAll('.intensity-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < level));
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal()   { document.getElementById('modal').classList.add('show'); }
+function closeModal()  { document.getElementById('modal').classList.remove('show'); }
+function confirmMenstrual() {
+  closeModal();
+  showToast('🩸 Menstruasi tercatat untuk hari ini!');
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function saveLog() { showToast('💾 Catatan hari ini berhasil disimpan!'); }
+
+// ── INIT ──────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  drawCycleWheel();
+  buildCalendar('miniCal', false);
+  buildCalendar('fullCal', true);
+});
+</script>
+</body>
+</html>
